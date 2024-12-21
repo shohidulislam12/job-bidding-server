@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb')
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 require('dotenv').config()
 
 const port = process.env.PORT || 9000
@@ -28,6 +28,60 @@ async function run() {
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!'
     )
+
+const db=client.db('solo-db')
+const jobsCollection=db.collection('jobs')
+//sabve a data in jobdb
+app.post('/add-job',async(req,res)=>{
+  const jobdata=req.body
+  const result=await jobsCollection.insertOne(jobdata)
+  res.send(result)
+
+})
+//get job data
+app.get('/jobs',async(req,res)=>{
+  const jobdata=await jobsCollection.find().toArray()
+  res.send(jobdata)
+})
+//get specific user post
+app.get(`/jobs/:email`,async(req,res)=>{
+  const email=req.params.email
+  const query={'buyer.email':email}
+  const result=await jobsCollection.find(query).toArray()
+  res.send(result)
+})
+app.delete('/job/:id',async(req,res)=>{
+  const id=req.params.id
+  const query={_id:new ObjectId(id)}
+  const result=await jobsCollection.deleteOne(query)
+  res.send(result)
+})
+ 
+//get single  job
+
+app.get('/job/:id',async(req,res)=>{
+  const id=req.params.id
+  const query={_id:new ObjectId(id)}
+  const result=await jobsCollection.findOne(query)
+  res.send(result)
+ 
+})
+//update single  job
+app.put('/update-Job/:id',async(req,res)=>{
+  const id=req.params.id
+  const filter={_id:new ObjectId(id)}
+  const options={upsert:true}
+  const jobdata=req.body
+  const updatedata={
+    $set:jobdata,
+  }
+ 
+
+  const result=await jobsCollection.updateOne(filter,updatedata,options)
+  res.send(result)
+
+})
+
   } finally {
     // Ensures that the client will close when you finish/error
   }
